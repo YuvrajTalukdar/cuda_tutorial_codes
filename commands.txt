@@ -1,0 +1,11 @@
+1. For compilation:- nvcc -gencode arch=compute_50,code=sm_50 cuda1.cu for 920mx
+
+2. for debugging- compute-sanitizer ./a.out
+
+3. old depreciated debugging command- cuda-memcheck ./hello
+
+4. for profiling performance- nvprof ./a.out
+
+5. For kernel optimization:- nvcc -gencode arch=compute_50,code=sm_50 cuda4.cu -Xptxas -O3
+
+6. 

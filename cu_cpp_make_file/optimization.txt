@@ -1,0 +1,21 @@
+
+34
+
+warning: compiling with nvcc -O3 filename.cu will pass the -O3 option to host code only.
+
+In order to optimize CUDA kernel code, you must pass optimization flags to the PTX compiler, for example:
+
+nvcc -Xptxas -O3,-v filename.cu
+
+will ask for optimization level 3 to cuda code (this is the default), while -v asks for a verbose compilation, which reports very useful information we can consider for further optimization techniques (more on this later).
+
+Another speed optimization flag available for nvcc compiler is the -use_fast_math which will use intrinsics at the expense of floating-point precision (see Options for Steering GPU code generation).
+
+Anyway, from my experience, such automatic compiler optimization options do not achieve in general great boosts. Best performances can be achieved through explicit coding optimizations, such as:
+
+    Instruction Level Parallelism (ILP): let each CUDA thread execute its task on more than one element - this approach will keep pipeline loaded and maximize throughput. For example, suppose you want to process the elements of a NxN tile, you can use a level 2 TLP launching an NxM block of threads (where M=N/2) and let the threadIdx.y loop over 2 different element lines.
+    register spilling control: keep under control the number of used registers per kernel and experiment with the -maxrrregcount=N option. The less registers a kernel requires, the more blocks are eligible to run concurrently (until register spilling will take over).
+    loop unrolling: try to add #pragma unroll N before any independent loop, if any, inside your CUDA kernel. N can be 2,3,4. Best results are met when you reach a good balance between register pressure and achieved unrolling level. This approach falls into the ILP technique, afterall.
+    data packing: sometimes you can join different correlated buffer data, say float A[N],B[N], into one buffer of float2 AB[N] data. This will translate into less operations for the load/store units and bus usage efficiency.
+
+Of course, always, always, always check your code to have coalesced memory accesses to global memory and avoiding bank conflicts in shared memory. Use the nVIDIA Visual Profiler to get a deeper insight of such issues.
